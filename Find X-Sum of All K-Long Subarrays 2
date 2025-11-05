@@ -1,0 +1,70 @@
+class Solution:
+    def findXSum(self, nums: List[int], k: int, x: int) -> List[int]:
+    
+        sortedList = []
+        counter = Counter(nums[:k])
+        for num, cnt in counter.items():
+            sortedList.append((-cnt, -num))
+        sortedList.sort()
+
+        curX = curSum = i = 0
+        while i < len(sortedList) and curX < x:
+            cnt, num = sortedList[i]
+            curSum += cnt*num
+            curX += 1
+            i += 1
+
+        answer = [curSum]
+        for i in range(k, len(nums)):
+            if nums[i] == nums[i-k]:
+                answer.append(curSum)
+                continue
+
+            # remove
+            rCnt = counter[nums[i-k]]
+            rNum = nums[i-k]
+            removeInd = bisect.bisect_left(sortedList, (-rCnt, -rNum))
+            sortedList.pop(removeInd)
+            if removeInd < x:
+                curSum -= rNum*rCnt
+                aNum, aCnt = sortedList[x-1] if x-1 < len(sortedList) else (0, 0)
+                curSum += aNum*aCnt
+            
+            # add
+            counter[nums[i-k]] -= 1
+            aCnt = counter[nums[i-k]]
+            aNum = nums[i-k]
+            bisect.insort(sortedList, (-aCnt, -aNum))
+            addInd = bisect.bisect_left(sortedList, (-aCnt, -aNum))
+            if addInd < x:
+                curSum += aNum*aCnt
+                rNum, rCnt = sortedList[x] if x < len(sortedList) else (0, 0)
+                curSum -= rNum*rCnt
+        
+            # remove 
+            rCnt = counter[nums[i]]
+            rNum = nums[i]
+            ind = bisect.bisect_left(sortedList, (-rCnt, -rNum))
+            if ind < len(sortedList) and sortedList[ind] == (-rCnt, -rNum):
+                removeInd = bisect.bisect_left(sortedList, (-rCnt, -rNum))
+                sortedList.pop(removeInd)
+                if removeInd < x:
+                    curSum -= rNum*rCnt
+                    aNum, aCnt = sortedList[x-1] if x-1 < len(sortedList) else (0, 0)
+                    curSum += aNum*aCnt
+         
+            # add
+            counter[nums[i]] += 1
+            aCnt = counter[nums[i]]
+            aNum = nums[i]
+            bisect.insort(sortedList, (-aCnt, -aNum))
+            addInd = bisect.bisect_left(sortedList, (-aCnt, -aNum))
+            if addInd < x:
+                curSum += aNum*aCnt
+                rNum, rCnt = sortedList[x] if x < len(sortedList) else (0, 0)
+                curSum -= rNum*rCnt
+         
+            answer.append(curSum)
+        
+        return answer
+        
